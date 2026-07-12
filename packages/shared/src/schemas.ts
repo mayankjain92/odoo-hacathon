@@ -9,6 +9,7 @@ import {
   Role,
   TransferStatus,
 } from "./enums";
+import { paginationQuerySchema } from "./pagination";
 
 function enumSchema<T extends string>(values: Record<string, T>) {
   const list = Object.values(values) as [T, ...T[]];
@@ -77,7 +78,41 @@ export const createAssetSchema = z.object({
   location: z.string().max(200).optional(),
   isSharedBookable: z.boolean().default(false),
   departmentId: z.string().cuid().optional().nullable(),
+  photoUrl: z.string().url().optional().nullable(),
 });
+
+export const updateAssetSchema = z.object({
+  name: z.string().min(1).max(200).optional(),
+  categoryId: z.string().cuid().optional(),
+  serialNumber: z.string().max(120).optional().nullable(),
+  acquisitionDate: z.string().datetime().or(z.string().date()).optional(),
+  acquisitionCost: z.number().nonnegative().optional().nullable(),
+  condition: z.string().max(120).optional().nullable(),
+  location: z.string().max(200).optional().nullable(),
+  isSharedBookable: z.boolean().optional(),
+  departmentId: z.string().cuid().optional().nullable(),
+  photoUrl: z.string().url().optional().nullable(),
+});
+
+export const updateAssetStatusSchema = z.object({
+  status: assetStatusSchema,
+  reason: z.string().max(500).optional(),
+});
+
+export const assetListQuerySchema = paginationQuerySchema.extend({
+  status: assetStatusSchema.optional(),
+  categoryId: z.string().cuid().optional(),
+  departmentId: z.string().cuid().optional(),
+  location: z.string().optional(),
+  assetTag: z.string().optional(),
+  serialNumber: z.string().optional(),
+  isSharedBookable: z.coerce.boolean().optional(),
+});
+
+export type CreateAssetInput = z.infer<typeof createAssetSchema>;
+export type UpdateAssetInput = z.infer<typeof updateAssetSchema>;
+export type UpdateAssetStatusInput = z.infer<typeof updateAssetStatusSchema>;
+export type AssetListQuery = z.infer<typeof assetListQuerySchema>;
 
 export const allocateAssetSchema = z.object({
   assetId: z.string().cuid(),
@@ -146,3 +181,22 @@ export const reportQuerySchema = z.object({
   to: z.string().datetime().optional(),
   departmentId: z.string().cuid().optional(),
 });
+
+export const updateDepartmentSchema = createDepartmentSchema.partial();
+export const updateAssetCategorySchema = createAssetCategorySchema.partial();
+
+export const updateUserSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  departmentId: z.string().cuid().optional().nullable(),
+  status: entityStatusSchema.optional(),
+});
+
+export const promoteUserSchema = z.object({
+  role: roleSchema,
+});
+
+export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+export type UpdateAssetCategoryInput = z.infer<typeof updateAssetCategorySchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type PromoteUserInput = z.infer<typeof promoteUserSchema>;
+
