@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ErrorCode } from "./enums.js";
+import { ErrorCode } from "./enums";
 
 const errorCodeValues = Object.values(ErrorCode) as [ErrorCode, ...ErrorCode[]];
 
