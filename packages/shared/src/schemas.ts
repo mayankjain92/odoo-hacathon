@@ -146,3 +146,22 @@ export const reportQuerySchema = z.object({
   to: z.string().datetime().optional(),
   departmentId: z.string().cuid().optional(),
 });
+
+export const updateDepartmentSchema = createDepartmentSchema.partial();
+export const updateAssetCategorySchema = createAssetCategorySchema.partial();
+
+export const updateUserSchema = z.object({
+  name: z.string().min(1).max(120).optional(),
+  departmentId: z.string().cuid().optional().nullable(),
+  status: entityStatusSchema.optional(),
+});
+
+export const promoteUserSchema = z.object({
+  role: roleSchema,
+});
+
+export type UpdateDepartmentInput = z.infer<typeof updateDepartmentSchema>;
+export type UpdateAssetCategoryInput = z.infer<typeof updateAssetCategorySchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type PromoteUserInput = z.infer<typeof promoteUserSchema>;
+
