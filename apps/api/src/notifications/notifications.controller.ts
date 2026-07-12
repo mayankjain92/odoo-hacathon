@@ -1,9 +1,10 @@
-import { Controller, Get, Patch, Param, Query, UseGuards, Req } from "@nestjs/common";
+import { Controller, Get, Patch, Delete, Param, Query, UseGuards } from "@nestjs/common";
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { NotificationsService } from "./notifications.service";
 import { NotificationQueryDto } from "./dto/notification.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
-import { Request } from "express";
+import { CurrentUser } from "../auth/decorators/current-user.decorator";
+import type { AuthUserView } from "../auth/types/auth.types";
 
 @ApiTags("notifications")
 @ApiBearerAuth()
@@ -15,24 +16,27 @@ export class NotificationsController {
   @Get()
   @ApiOperation({ summary: "Get user notifications" })
   async getNotifications(
-    @Req() req: Request,
+    @CurrentUser() user: AuthUserView,
     @Query() query: NotificationQueryDto,
   ) {
-    const userId = (req.user as any).userId;
-    return this.notificationsService.getUserNotifications(userId, query);
+    return this.notificationsService.getUserNotifications(user.id, query);
   }
 
   @Patch("read-all")
   @ApiOperation({ summary: "Mark all unread notifications as read" })
-  async markAllAsRead(@Req() req: Request) {
-    const userId = (req.user as any).userId;
-    return this.notificationsService.markAllAsRead(userId);
+  async markAllAsRead(@CurrentUser() user: AuthUserView) {
+    return this.notificationsService.markAllAsRead(user.id);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: "Clear (delete) all notifications for the user" })
+  async clearAll(@CurrentUser() user: AuthUserView) {
+    return this.notificationsService.clearAll(user.id);
   }
 
   @Patch(":id/read")
   @ApiOperation({ summary: "Mark a notification as read" })
-  async markAsRead(@Req() req: Request, @Param("id") id: string) {
-    const userId = (req.user as any).userId;
-    return this.notificationsService.markAsRead(userId, id);
+  async markAsRead(@CurrentUser() user: AuthUserView, @Param("id") id: string) {
+    return this.notificationsService.markAsRead(user.id, id);
   }
 }

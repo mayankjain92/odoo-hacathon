@@ -180,8 +180,9 @@ export default function BookingsPage() {
 
                     <div className="self-end sm:self-auto">
                       <span className={`rounded-full px-2.5 py-0.5 text-3xs font-semibold ${
-                        booking.status === "Approved" ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40" :
-                        booking.status === "Pending" ? "bg-amber-950 text-amber-400 border border-amber-800/40" :
+                        booking.status === "Ongoing" ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40" :
+                        booking.status === "Upcoming" ? "bg-amber-950 text-amber-400 border border-amber-800/40" :
+                        booking.status === "Cancelled" ? "bg-red-950 text-red-400 border border-red-800/40" :
                         "bg-neutral-900 text-neutral-400 border border-neutral-800"
                       }`}>
                         {booking.status}
