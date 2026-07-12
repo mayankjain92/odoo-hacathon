@@ -1,0 +1,3 @@
+# Feature modules live here (auth, assets, bookings, …).
+# Keep route files thin; put data hooks and UI in features/*.
+export {};

@@ -1,0 +1,2 @@
+# OpenAPI snapshot freeze lives here once Nest Swagger is exported.
+# FE MSW and BE implementations must match this contract.

@@ -1,0 +1,27 @@
+@import "tailwindcss";
+@import "@assetflow/ui/tokens.css";
+
+:root {
+  --background: #0f1419;
+  --foreground: #e8eef4;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--af-surface);
+  --color-accent: var(--af-accent);
+  --color-muted: var(--af-muted);
+  --font-sans: var(--font-sora), var(--af-font-sans);
+  --font-display: var(--font-outfit), var(--af-font-display);
+}
+
+body {
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(45, 212, 191, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.08), transparent 50%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+}

@@ -1,0 +1,16 @@
+:root {
+  --af-bg: #0f1419;
+  --af-surface: #1a222c;
+  --af-surface-elevated: #243040;
+  --af-border: #2f3d4d;
+  --af-text: #e8eef4;
+  --af-muted: #8b9aab;
+  --af-accent: #2dd4bf;
+  --af-accent-hover: #14b8a6;
+  --af-warning: #f59e0b;
+  --af-danger: #f87171;
+  --af-success: #34d399;
+  --af-radius: 12px;
+  --af-font-sans: "Sora", "Segoe UI", sans-serif;
+  --af-font-display: "Outfit", "Sora", sans-serif;
+}
