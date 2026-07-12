@@ -85,3 +85,38 @@ export const ErrorCode = {
   INVALID_STATUS_TRANSITION: "INVALID_STATUS_TRANSITION",
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
+
+export const NotificationType = {
+  AllocationOverdue: "AllocationOverdue",
+  AssetAssigned: "AssetAssigned",
+  BookingReminder: "BookingReminder",
+  BookingUpdate: "BookingUpdate",
+  MaintenanceUpdate: "MaintenanceUpdate",
+  TransferRequest: "TransferRequest",
+  AuditDiscrepancy: "AuditDiscrepancy",
+  System: "System",
+} as const;
+export type NotificationType =
+  (typeof NotificationType)[keyof typeof NotificationType];
+
+export const ActivityAction = {
+  Created: "Created",
+  Updated: "Updated",
+  Deleted: "Deleted",
+  StatusChange: "StatusChange",
+  Approved: "Approved",
+  Rejected: "Rejected",
+} as const;
+export type ActivityAction =
+  (typeof ActivityAction)[keyof typeof ActivityAction];
+
+export const EntityType = {
+  User: "User",
+  Department: "Department",
+  Asset: "Asset",
+  Allocation: "Allocation",
+  Booking: "Booking",
+  Maintenance: "Maintenance",
+  Audit: "Audit",
+} as const;
+export type EntityType = (typeof EntityType)[keyof typeof EntityType];
