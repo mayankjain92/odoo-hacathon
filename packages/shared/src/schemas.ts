@@ -200,3 +200,6 @@ export type UpdateAssetCategoryInput = z.infer<typeof updateAssetCategorySchema>
 export type UpdateUserInput = z.infer<typeof updateUserSchema>;
 export type PromoteUserInput = z.infer<typeof promoteUserSchema>;
 
+export type AllocateAssetInput = z.infer<typeof allocateAssetSchema>;
+export type CreateTransferRequestInput = z.infer<typeof createTransferRequestSchema>;
+export type ResolveTransferInput = z.infer<typeof resolveTransferSchema>;
