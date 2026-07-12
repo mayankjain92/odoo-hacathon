@@ -16,7 +16,7 @@ import {
   TrendingUp,
   Box
 } from "lucide-react";
-import { Role, AssetStatus } from "@assetflow/shared";
+import { Role } from "@assetflow/shared";
 
 interface User {
   id: string;
@@ -33,31 +33,24 @@ export default function DashboardPage() {
     queryKey: ["auth-user"],
   });
 
-  // 2. Fetch assets to construct live KPIs
-  const { data: assetsRes, isLoading: assetsLoading } = useQuery<{ data: any[] }>({
+  // 2. Authoritative KPI counts (server-computed; not capped by pagination)
+  const { data: kpis, isLoading: kpisLoading } = useQuery<any>({
+    queryKey: ["dashboard-kpis"],
+    queryFn: () => apiFetch<any>("/reports/dashboard"),
+  });
+
+  // 3. Fetch assets, active allocations & employees to build the overdue callout
+  const { data: assetsRes } = useQuery<{ data: any[] }>({
     queryKey: ["assets"],
     queryFn: () => apiFetch<{ data: any[] }>("/assets?pageSize=100"),
   });
 
-  // 3. Fetch maintenance requests
-  const { data: maintenanceRes } = useQuery<{ data: any[] }>({
-    queryKey: ["maintenance"],
-    queryFn: () => apiFetch<{ data: any[] }>("/maintenance"),
-  });
-
-  // 4. Fetch bookings
-  const { data: bookingsRes } = useQuery<{ data: any[] }>({
-    queryKey: ["bookings"],
-    queryFn: () => apiFetch<{ data: any[] }>("/bookings"),
-  });
-
-  // 5. Fetch allocations to calculate overdue items
   const { data: allocationsRes } = useQuery<{ data: any[] }>({
     queryKey: ["allocations"],
-    queryFn: () => apiFetch<{ data: any[] }>("/allocations"),
+    queryFn: () => apiFetch<{ data: any[] }>("/allocations?status=active&pageSize=100"),
   });
 
-  // 6. Fetch employees to resolve names for overdue allocations
+  // 4. Fetch employees to resolve names for overdue allocations
   const { data: employeesRes } = useQuery<{ data: any[] }>({
     queryKey: ["employees"],
     queryFn: () => apiFetch<{ data: any[] }>("/org/employees?pageSize=200"),
@@ -66,16 +59,14 @@ export default function DashboardPage() {
   if (!user) return null;
 
   const assets = assetsRes?.data || [];
-  const maintenance = maintenanceRes?.data || [];
-  const bookings = bookingsRes?.data || [];
   const allocations = allocationsRes?.data || [];
   const employees = employeesRes?.data || [];
 
-  // Compute live KPIs
-  const totalAssets = assets.length;
-  const availableAssets = assets.filter(a => a.status === AssetStatus.Available).length;
-  const maintenanceAssets = assets.filter(a => a.status === AssetStatus.UnderMaintenance).length;
-  const activeBookings = bookings.filter(b => b.status === "Upcoming" || b.status === "Ongoing").length;
+  // KPI numbers come from the server; fall back to 0 while loading
+  const totalAssets = kpis?.totalAssets ?? 0;
+  const availableAssets = kpis?.availableAssets ?? 0;
+  const maintenanceAssets = kpis?.underMaintenanceAssets ?? 0;
+  const activeBookings = kpis?.activeBookingsCount ?? 0;
 
   // Calculate Overdue Allocations: expectedReturnAt is past & returnedAt is null
   const now = new Date();
@@ -233,7 +224,7 @@ export default function DashboardPage() {
               </div>
               <div className="mt-3 flex items-baseline gap-2">
                 <span className="text-3xl font-bold tracking-tight text-white font-[family-name:var(--font-display)]">
-                  {assetsLoading ? "..." : card.val}
+                  {kpisLoading ? "..." : card.val}
                 </span>
                 <span className="text-xs text-[var(--af-muted)]">{card.sub}</span>
               </div>

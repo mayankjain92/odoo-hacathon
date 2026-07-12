@@ -63,39 +63,42 @@ export class BookingsService {
       );
     }
 
-    // 4. Overlap check — reject if any non-cancelled booking overlaps
+    // 4. Overlap check + create inside a single transaction, guarded by a
+    //    per-asset advisory lock so concurrent requests cannot both pass the
+    //    check and double-book (TOCTOU). The lock auto-releases at commit.
     //    Rule: end time of A == start time of B is allowed (adjacent OK)
     //    Overlap condition: existingStart < newEnd AND existingEnd > newStart
-    const overlapping = await this.prisma.booking.findFirst({
-      where: {
-        assetId: dto.assetId,
-        status: { not: BookingStatus.Cancelled as any },
-        startsAt: { lt: endsAt },
-        endsAt: { gt: startsAt },
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
-
-    if (overlapping) {
-      throw new ApiException(
-        ErrorCode.BOOKING_OVERLAP,
-        "The requested time slot overlaps with an existing booking",
-        HttpStatus.CONFLICT,
-        {
-          conflictingBooking: {
-            id: overlapping.id,
-            startsAt: overlapping.startsAt,
-            endsAt: overlapping.endsAt,
-            bookedBy: overlapping.user,
-          },
-        },
-      );
-    }
-
-    // 5. Create booking inside transaction
     return this.prisma.$transaction(async (tx) => {
+      await this.lockAsset(tx, dto.assetId);
+
+      const overlapping = await tx.booking.findFirst({
+        where: {
+          assetId: dto.assetId,
+          status: { not: BookingStatus.Cancelled as any },
+          startsAt: { lt: endsAt },
+          endsAt: { gt: startsAt },
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      if (overlapping) {
+        throw new ApiException(
+          ErrorCode.BOOKING_OVERLAP,
+          "The requested time slot overlaps with an existing booking",
+          HttpStatus.CONFLICT,
+          {
+            conflictingBooking: {
+              id: overlapping.id,
+              startsAt: overlapping.startsAt,
+              endsAt: overlapping.endsAt,
+              bookedBy: overlapping.user,
+            },
+          },
+        );
+      }
+
       const booking = await tx.booking.create({
         data: {
           assetId: dto.assetId,
@@ -286,37 +289,40 @@ export class BookingsService {
       );
     }
 
-    // Overlap check (exclude current booking)
-    const overlapping = await this.prisma.booking.findFirst({
-      where: {
-        assetId: booking.assetId,
-        id: { not: bookingId },
-        status: { not: BookingStatus.Cancelled as any },
-        startsAt: { lt: newEndsAt },
-        endsAt: { gt: newStartsAt },
-      },
-      include: {
-        user: { select: { id: true, name: true, email: true } },
-      },
-    });
-
-    if (overlapping) {
-      throw new ApiException(
-        ErrorCode.BOOKING_OVERLAP,
-        "The new time slot overlaps with an existing booking",
-        HttpStatus.CONFLICT,
-        {
-          conflictingBooking: {
-            id: overlapping.id,
-            startsAt: overlapping.startsAt,
-            endsAt: overlapping.endsAt,
-            bookedBy: overlapping.user,
-          },
-        },
-      );
-    }
-
+    // Overlap check (exclude current booking) + update inside a single
+    // transaction, guarded by a per-asset advisory lock (see createBooking).
     return this.prisma.$transaction(async (tx) => {
+      await this.lockAsset(tx, booking.assetId);
+
+      const overlapping = await tx.booking.findFirst({
+        where: {
+          assetId: booking.assetId,
+          id: { not: bookingId },
+          status: { not: BookingStatus.Cancelled as any },
+          startsAt: { lt: newEndsAt },
+          endsAt: { gt: newStartsAt },
+        },
+        include: {
+          user: { select: { id: true, name: true, email: true } },
+        },
+      });
+
+      if (overlapping) {
+        throw new ApiException(
+          ErrorCode.BOOKING_OVERLAP,
+          "The new time slot overlaps with an existing booking",
+          HttpStatus.CONFLICT,
+          {
+            conflictingBooking: {
+              id: overlapping.id,
+              startsAt: overlapping.startsAt,
+              endsAt: overlapping.endsAt,
+              bookedBy: overlapping.user,
+            },
+          },
+        );
+      }
+
       const updated = await tx.booking.update({
         where: { id: bookingId },
         data: {
@@ -722,6 +728,17 @@ export class BookingsService {
   // ==========================================
   // HELPER: Reset asset status when no active bookings remain
   // ==========================================
+
+  /**
+   * Acquire a transaction-scoped Postgres advisory lock for an asset so that
+   * concurrent booking operations on the same asset are serialized, preventing
+   * TOCTOU double-booking. Auto-released when the transaction commits/rolls back.
+   * ponytail: advisory lock avoids a gist EXCLUDE constraint (no migration/extension).
+   * hashtext collisions only reduce concurrency for unrelated assets, never correctness.
+   */
+  private async lockAsset(tx: any, assetId: string): Promise<void> {
+    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${assetId}))`;
+  }
 
   private async resetAssetStatusIfNoActiveBookings(tx: any, assetId: string) {
     const activeBookings = await tx.booking.count({
