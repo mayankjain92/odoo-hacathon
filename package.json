@@ -12,6 +12,7 @@
     "db:generate": "turbo run db:generate --filter=@assetflow/api",
     "db:migrate": "turbo run db:migrate --filter=@assetflow/api",
     "db:seed": "turbo run db:seed --filter=@assetflow/api",
+    "db:check": "pnpm --filter @assetflow/api db:check",
     "infra:up": "docker compose -f infra/docker-compose.yml up -d",
     "infra:down": "docker compose -f infra/docker-compose.yml down",
     "infra:logs": "docker compose -f infra/docker-compose.yml logs -f"
