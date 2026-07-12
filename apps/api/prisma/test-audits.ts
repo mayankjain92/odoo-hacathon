@@ -171,6 +171,32 @@ async function runTests() {
   console.log("✓ TEST 4 PASSED");
 
   // ==========================================
+  // TEST 4.5: Record Missing Item
+  // ==========================================
+  console.log("\n[TEST 4.5] Recording Missing Item...");
+  const asset3 = await prismaService.asset.create({
+    data: {
+      id: "test-asset-3",
+      name: "Desktop 1",
+      assetTag: "TEST-03",
+      categoryId: category.id,
+      status: AssetStatus.Available,
+      acquisitionDate: new Date(),
+      departmentId: deptEngineering.id,
+      location: "Office A",
+    },
+  });
+  
+  const itemMissing = await service.recordItem(
+    cycle.id,
+    { assetTag: "TEST-03", result: AuditItemResult.Missing },
+    auditor1.id
+  );
+  assert.strictEqual(itemMissing.result, AuditItemResult.Missing);
+  assert.strictEqual(itemMissing.assetId, asset3.id);
+  console.log("✓ TEST 4.5 PASSED");
+
+  // ==========================================
   // TEST 5: Reject out-of-scope asset
   // ==========================================
   console.log("\n[TEST 5] Rejecting Out of Scope Asset...");
@@ -188,9 +214,9 @@ async function runTests() {
   }
 
   // ==========================================
-  // TEST 6: Close Cycle
+  // TEST 6: Close Cycle & Verify Missing Assets are Lost
   // ==========================================
-  console.log("\n[TEST 6] Closing Audit Cycle...");
+  console.log("\n[TEST 6] Closing Audit Cycle & Verifying Status Updates...");
   const closedCycle = await service.updateStatus(
     cycle.id,
     { status: AuditCycleStatus.Closed },
@@ -198,6 +224,13 @@ async function runTests() {
   );
   assert.strictEqual(closedCycle.status, AuditCycleStatus.Closed);
   assert.ok(closedCycle.lockedAt !== null);
+
+  const missingAsset = await prismaService.asset.findUnique({ where: { id: asset3.id } });
+  assert.strictEqual(missingAsset?.status, AssetStatus.Lost);
+  
+  const verifiedAsset = await prismaService.asset.findUnique({ where: { id: asset1.id } });
+  assert.strictEqual(verifiedAsset?.status, AssetStatus.Available);
+
   console.log("✓ TEST 6 PASSED");
 
   console.log("\n=== ALL AUDIT TESTS PASSED SUCCESSFULLY! ===");

@@ -133,15 +133,33 @@ export class AuditsService {
       );
     }
 
-    const updateData: Prisma.AuditCycleUpdateInput = { status: toStatus };
-    if (toStatus === AuditCycleStatus.Closed) {
-      updateData.lockedAt = new Date();
-    }
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const updateData: Prisma.AuditCycleUpdateInput = { status: toStatus };
+      if (toStatus === AuditCycleStatus.Closed) {
+        updateData.lockedAt = new Date();
+      }
 
-    const updated = await this.prisma.auditCycle.update({
-      where: { id },
-      data: updateData,
-      include: cycleInclude,
+      const cycleRes = await tx.auditCycle.update({
+        where: { id },
+        data: updateData,
+        include: cycleInclude,
+      });
+
+      if (toStatus === AuditCycleStatus.Closed) {
+        const missingItems = await tx.auditItem.findMany({
+          where: { cycleId: id, result: "Missing" }, // AuditItemResult.Missing
+        });
+        
+        if (missingItems.length > 0) {
+          const assetIds = missingItems.map(item => item.assetId);
+          await tx.asset.updateMany({
+            where: { id: { in: assetIds } },
+            data: { status: "Lost" }, // AssetStatus.Lost
+          });
+        }
+      }
+
+      return cycleRes;
     });
 
     await this.logActivity(actorId, "audit.status_updated", "AuditCycle", cycle.id, { fromStatus, toStatus });
