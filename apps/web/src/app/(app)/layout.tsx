@@ -76,7 +76,7 @@ export default function AppShellLayout({
     enabled: !!user,
   });
 
-  const unreadCount = notifications?.data.filter(n => !n.read).length || 0;
+  const unreadCount = notifications?.data.filter(n => !n.readAt).length || 0;
 
 
   const logoutMutation = useMutation({

@@ -128,8 +128,26 @@ export class AllocationsService {
       }
     }
 
-    // 6. Database Transaction
+    // 6. Database Transaction — a per-asset advisory lock plus a re-check inside
+    //    the transaction ensures two concurrent allocations of the same asset
+    //    cannot both pass the availability check (TOCTOU). The outer check above
+    //    stays for the fast path and its richer "already allocated" error.
     return this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${dto.assetId}))`;
+
+      const [fresh, activeCount] = await Promise.all([
+        tx.asset.findUnique({ where: { id: dto.assetId }, select: { status: true } }),
+        tx.allocation.count({ where: { assetId: dto.assetId, active: true } }),
+      ]);
+
+      if (!fresh || fresh.status !== AssetStatus.Available || activeCount > 0) {
+        throw new ApiException(
+          ErrorCode.ASSET_ALREADY_ALLOCATED,
+          "Asset is no longer available for allocation",
+          HttpStatus.CONFLICT,
+        );
+      }
+
       // Create allocation record
       const allocation = await tx.allocation.create({
         data: {

@@ -27,30 +27,27 @@ export default function NotificationsPage() {
 
   // Mutations
   const readAllMutation = useMutation({
-    mutationFn: () => apiFetch("/notifications/read-all", { method: "POST" }),
+    mutationFn: () => apiFetch("/notifications/read-all", { method: "PATCH" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   const clearAllMutation = useMutation({
-    mutationFn: () => apiFetch("/notifications/clear", { method: "POST" }),
+    mutationFn: () => apiFetch("/notifications", { method: "DELETE" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications"] }),
   });
 
   // Decide icon based on type
   const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case "OVERDUE":
-      case "DISCREPANCY":
-        return <AlertTriangle className="h-4 w-4 text-red-400" />;
-      case "MAINTENANCE":
-        return <Wrench className="h-4 w-4 text-amber-400" />;
-      case "BOOKING":
-        return <Calendar className="h-4 w-4 text-cyan-400" />;
-      case "TRANSFER":
-        return <FolderSync className="h-4 w-4 text-indigo-400" />;
-      default:
-        return <Info className="h-4 w-4 text-neutral-400" />;
-    }
+    const t = (type || "").toLowerCase();
+    if (t.includes("overdue") || t.includes("discrepancy"))
+      return <AlertTriangle className="h-4 w-4 text-red-400" />;
+    if (t.includes("maintenance"))
+      return <Wrench className="h-4 w-4 text-amber-400" />;
+    if (t.includes("booking"))
+      return <Calendar className="h-4 w-4 text-cyan-400" />;
+    if (t.includes("transfer"))
+      return <FolderSync className="h-4 w-4 text-indigo-400" />;
+    return <Info className="h-4 w-4 text-neutral-400" />;
   };
 
   return (
@@ -104,20 +101,20 @@ export default function NotificationsPage() {
             <div
               key={notif.id}
               className={`rounded-lg border p-4.5 transition flex gap-3.5 items-start ${
-                notif.read
+                notif.readAt
                   ? "border-[var(--af-border)] bg-[var(--af-surface)]/40 opacity-75"
                   : "border-[var(--af-accent)]/20 bg-[var(--af-surface)]/80 shadow-md"
               }`}
             >
               <div className={`rounded-lg p-2 shrink-0 ${
-                notif.read ? "bg-[var(--af-surface-elevated)]/40" : "bg-[var(--af-accent)]/5"
+                notif.readAt ? "bg-[var(--af-surface-elevated)]/40" : "bg-[var(--af-accent)]/5"
               }`}>
                 {getNotificationIcon(notif.type)}
               </div>
 
               <div className="space-y-1 flex-1">
                 <div className="flex justify-between items-start gap-4">
-                  <h4 className={`text-xs font-semibold ${notif.read ? "text-neutral-300" : "text-white"}`}>
+                  <h4 className={`text-xs font-semibold ${notif.readAt ? "text-neutral-300" : "text-white"}`}>
                     {notif.title}
                   </h4>
                   <span className="text-3xs font-mono text-[var(--af-muted)] whitespace-nowrap">
@@ -125,11 +122,11 @@ export default function NotificationsPage() {
                   </span>
                 </div>
                 <p className="text-2xs text-[var(--af-muted)] leading-relaxed">
-                  {notif.message}
+                  {notif.body}
                 </p>
               </div>
 
-              {!notif.read && (
+              {!notif.readAt && (
                 <span className="h-2 w-2 rounded-full bg-[var(--af-accent)] shrink-0 self-center"></span>
               )}
             </div>
