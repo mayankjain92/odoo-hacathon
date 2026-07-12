@@ -1,22 +1,25 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsDateString, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsString, IsNotEmpty, IsDateString, IsOptional, MaxLength } from "class-validator";
 
 export class CreateBookingDto {
-  @ApiProperty({ description: "ID of the asset to book" })
+  @ApiProperty({ description: "Asset ID to book (must be a shared/bookable resource)", example: "clp1234560000xx88" })
   @IsString()
+  @IsNotEmpty()
   assetId!: string;
 
-  @ApiProperty({ description: "Start time of the booking (ISO format)" })
+  @ApiProperty({ description: "Booking start time in ISO-8601 format", example: "2026-07-15T09:00:00.000Z" })
   @IsDateString()
+  @IsNotEmpty()
   startsAt!: string;
 
-  @ApiProperty({ description: "End time of the booking (ISO format)" })
+  @ApiProperty({ description: "Booking end time in ISO-8601 format", example: "2026-07-15T11:00:00.000Z" })
   @IsDateString()
+  @IsNotEmpty()
   endsAt!: string;
 
-  @ApiPropertyOptional({ description: "Optional purpose or notes" })
-  @IsOptional()
+  @ApiPropertyOptional({ description: "Purpose / reason for the booking", example: "Team standup meeting" })
   @IsString()
+  @IsOptional()
   @MaxLength(500)
   purpose?: string;
 }
