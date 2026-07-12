@@ -99,7 +99,9 @@ export class AssetsService {
           isSharedBookable: dto.isSharedBookable ?? false,
           departmentId: dto.departmentId ?? null,
           photoUrl: dto.photoUrl ?? null,
-          metadata: dto.metadata ? (dto.metadata as any) : null,
+          metadata: dto.metadata
+            ? (dto.metadata as Prisma.InputJsonValue)
+            : undefined,
           status: AssetStatus.Available,
         },
         include: assetInclude,
@@ -253,7 +255,7 @@ export class AssetsService {
       data.photoUrl = dto.photoUrl;
     }
     if (dto.metadata !== undefined) {
-      data.metadata = dto.metadata as any;
+      data.metadata = dto.metadata as Prisma.InputJsonValue;
     }
 
     const asset = await this.prisma.asset.update({
@@ -657,7 +659,7 @@ export class AssetsService {
       photoUrl: asset.photoUrl,
       photoPublicId: asset.photoPublicId,
       documents: this.parseDocuments(asset.documents),
-      metadata: asset.metadata as Record<string, any> | null,
+      metadata: (asset.metadata as Record<string, unknown> | null) ?? null,
       category: asset.category,
       department: asset.department,
       departmentId: asset.departmentId,

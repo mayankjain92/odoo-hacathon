@@ -3,6 +3,7 @@ import {
   IsBoolean,
   IsDateString,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUrl,
@@ -11,7 +12,6 @@ import {
   MinLength,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { IsObject } from "class-validator";
 
 export class CreateAssetDto {
   @ApiProperty({ example: "MacBook Pro 14" })
@@ -68,8 +68,8 @@ export class CreateAssetDto {
   @IsUrl()
   photoUrl?: string | null;
 
-  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  @ApiPropertyOptional({ type: "object", additionalProperties: true })
   @IsOptional()
   @IsObject()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
