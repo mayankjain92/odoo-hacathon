@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsDateString, IsOptional } from "class-validator";
+import { IsString, IsNotEmpty, IsDateString, IsOptional, MaxLength } from "class-validator";
 
 export class CreateBookingDto {
   @ApiProperty({ description: "Asset ID to book (must be a shared/bookable resource)", example: "clp1234560000xx88" })
@@ -20,5 +20,6 @@ export class CreateBookingDto {
   @ApiPropertyOptional({ description: "Purpose / reason for the booking", example: "Team standup meeting" })
   @IsString()
   @IsOptional()
+  @MaxLength(500)
   purpose?: string;
 }

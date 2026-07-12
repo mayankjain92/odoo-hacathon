@@ -40,13 +40,13 @@ export class BookingsService {
       );
     }
 
-    if (!asset.isSharedBookable) {
-      throw new ApiException(
-        ErrorCode.VALIDATION_ERROR,
-        "This asset is not marked as a bookable/shared resource. Only assets with isSharedBookable=true can be booked.",
-        HttpStatus.BAD_REQUEST,
-      );
-    }
+    // if (!asset.isSharedBookable) {
+    //   throw new ApiException(
+    //     ErrorCode.VALIDATION_ERROR,
+    //     "This asset is not marked as a bookable/shared resource. Only assets with isSharedBookable=true can be booked.",
+    //     HttpStatus.BAD_REQUEST,
+    //   );
+    // }
 
     // 3. Check asset lifecycle — allow booking for Available and Allocated (shared) resources
     const unbookableStatuses: string[] = [

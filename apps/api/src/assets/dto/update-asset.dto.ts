@@ -11,6 +11,7 @@ import {
   MinLength,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { IsObject } from "class-validator";
 
 export class UpdateAssetDto {
   @ApiPropertyOptional()
@@ -69,4 +70,9 @@ export class UpdateAssetDto {
   @IsOptional()
   @IsUrl()
   photoUrl?: string | null;
+
+  @ApiPropertyOptional({ type: 'object', additionalProperties: true })
+  @IsOptional()
+  @IsObject()
+  metadata?: Record<string, any>;
 }
