@@ -82,5 +82,6 @@ export const ErrorCode = {
   NOT_FOUND: "NOT_FOUND",
   VALIDATION_ERROR: "VALIDATION_ERROR",
   CONFLICT: "CONFLICT",
+  INVALID_STATUS_TRANSITION: "INVALID_STATUS_TRANSITION",
 } as const;
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];

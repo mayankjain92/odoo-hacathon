@@ -146,6 +146,9 @@ model Asset {
   departmentId     String?
   department       Department? @relation(fields: [departmentId], references: [id])
   photoUrl         String?
+  photoPublicId    String?
+  /// Cloudinary document metadata: [{ publicId, url, originalName, format, bytes, resourceType }]
+  documents        Json?
   createdAt        DateTime    @default(now())
   updatedAt        DateTime    @updatedAt
 
