@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiException } from "../common/errors/api.exception";
-import { ErrorCode, BookingStatus, AssetStatus, Role } from "@assetflow/shared";
+import { ErrorCode, BookingStatus, AssetStatus, Role, NotificationType } from "@assetflow/shared";
 import { CreateBookingDto } from "./dto/create-booking.dto";
 import { RescheduleBookingDto } from "./dto/reschedule-booking.dto";
 import { BookingsQueryDto } from "./dto/bookings-query.dto";
@@ -135,6 +135,16 @@ export class BookingsService {
             endsAt: endsAt.toISOString(),
             purpose: dto.purpose || null,
           },
+        },
+      });
+
+      // Notify the booker their reservation is confirmed
+      await tx.notification.create({
+        data: {
+          userId: actorId,
+          title: "Booking Confirmed",
+          body: `Your booking for "${booking.asset.name}" (${booking.asset.assetTag}) from ${startsAt.toISOString()} to ${endsAt.toISOString()} is confirmed.`,
+          type: NotificationType.BookingUpdate,
         },
       });
 

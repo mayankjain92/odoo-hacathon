@@ -1,7 +1,7 @@
 import { Injectable, HttpStatus } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiException } from "../common/errors/api.exception";
-import { ErrorCode, AssetStatus, EntityStatus, TransferStatus, Role } from "@assetflow/shared";
+import { ErrorCode, AssetStatus, EntityStatus, TransferStatus, Role, NotificationType } from "@assetflow/shared";
 import { AllocateAssetDto } from "./dto/allocate-asset.dto";
 import { ReturnAssetDto } from "./dto/return-asset.dto";
 import { CreateTransferDto } from "./dto/create-transfer.dto";
@@ -191,6 +191,18 @@ export class AllocationsService {
           },
         },
       });
+
+      // Notify the employee the asset was assigned to them
+      if (dto.employeeId) {
+        await tx.notification.create({
+          data: {
+            userId: dto.employeeId,
+            title: "Asset Assigned",
+            body: `"${allocation.asset.name}" (${allocation.asset.assetTag}) has been allocated to you.`,
+            type: NotificationType.AssetAssigned,
+          },
+        });
+      }
 
       return allocation;
     });
@@ -593,6 +605,28 @@ export class AllocationsService {
             },
           },
         });
+
+        // Notify the requester their transfer was approved
+        await tx.notification.create({
+          data: {
+            userId: request.requesterId,
+            title: "Transfer Approved",
+            body: `Your transfer request for "${request.asset.name}" (${request.asset.assetTag}) was approved.`,
+            type: NotificationType.TransferRequest,
+          },
+        });
+
+        // Notify the new holder the asset was assigned to them
+        if (request.toEmployeeId) {
+          await tx.notification.create({
+            data: {
+              userId: request.toEmployeeId,
+              title: "Asset Assigned",
+              body: `"${request.asset.name}" (${request.asset.assetTag}) has been transferred to you.`,
+              type: NotificationType.AssetAssigned,
+            },
+          });
+        }
       } else {
         await tx.activityLog.create({
           data: {
@@ -603,6 +637,16 @@ export class AllocationsService {
             metadata: {
               reason: dto.notes || null,
             },
+          },
+        });
+
+        // Notify the requester their transfer was rejected
+        await tx.notification.create({
+          data: {
+            userId: request.requesterId,
+            title: "Transfer Rejected",
+            body: `Your transfer request for "${request.asset.name}" (${request.asset.assetTag}) was rejected.`,
+            type: NotificationType.TransferRequest,
           },
         });
       }

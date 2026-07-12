@@ -2,7 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { Prisma } from "../generated/prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { ApiException } from "../common/errors/api.exception";
-import { AuditCycleStatus, ErrorCode, buildPaginationMeta, type PaginatedResponse } from "@assetflow/shared";
+import { AuditCycleStatus, AuditItemResult, ErrorCode, EntityStatus, Role, NotificationType, buildPaginationMeta, type PaginatedResponse } from "@assetflow/shared";
 import type { CreateAuditCycleDto } from "./dto/create-audit-cycle.dto";
 import type { AuditCycleQueryDto } from "./dto/audit-cycle-query.dto";
 import type { RecordAuditItemDto } from "./dto/record-audit-item.dto";
@@ -230,6 +230,30 @@ export class AuditsService {
       assetId: asset.id,
       result: dto.result,
     });
+
+    // Flag a discrepancy: notify admins/asset managers when an item is Missing or Damaged
+    if (
+      dto.result === AuditItemResult.Missing ||
+      dto.result === AuditItemResult.Damaged
+    ) {
+      const managers = await this.prisma.user.findMany({
+        where: {
+          role: { in: [Role.Admin, Role.AssetManager] },
+          status: EntityStatus.Active,
+        },
+        select: { id: true },
+      });
+      if (managers.length > 0) {
+        await this.prisma.notification.createMany({
+          data: managers.map((m) => ({
+            userId: m.id,
+            title: "Audit Discrepancy Flagged",
+            body: `Asset "${asset.name}" (${asset.assetTag}) was flagged as ${dto.result} in audit cycle "${cycle.name}".`,
+            type: NotificationType.AuditDiscrepancy,
+          })),
+        });
+      }
+    }
 
     return item;
   }
