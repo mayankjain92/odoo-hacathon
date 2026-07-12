@@ -19,9 +19,12 @@ import {
   UserCheck,
   ChevronDown,
   Menu,
-  X
+  X,
+  Sun,
+  Moon
 } from "lucide-react";
 import { Role } from "@assetflow/shared";
+import { useTheme } from "@/lib/theme-provider";
 
 interface User {
   id: string;
@@ -53,6 +56,7 @@ export default function AppShellLayout({
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   // Fetch current user session
   const { data: user, isLoading, isError } = useQuery<User>({
@@ -100,8 +104,8 @@ export default function AppShellLayout({
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#0f1419]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#2dd4bf] border-t-transparent"></div>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--af-bg)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[var(--af-accent)] border-t-transparent"></div>
       </div>
     );
   }
@@ -113,7 +117,7 @@ export default function AppShellLayout({
   const isAuthorized = activeNavItem ? activeNavItem.roles.includes(user.role) : true;
 
   return (
-    <div className="flex min-h-screen bg-[#0f1419] text-[#e8eef4]">
+    <div className="flex min-h-screen bg-[var(--af-bg)] text-[var(--af-text)]">
       {/* Sidebar for desktop */}
       <aside className={`fixed inset-y-0 left-0 z-40 w-64 border-r border-[var(--af-border)] bg-[var(--af-surface)]/90 backdrop-blur-md p-5 transition-transform duration-300 md:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} md:static md:flex md:flex-col shrink-0`}>
         <div className="flex items-center justify-between">
@@ -233,7 +237,19 @@ export default function AppShellLayout({
               )}
             </div>
 
-            <Link href="/notifications" className="relative text-[var(--af-muted)] hover:text-white transition">
+            <button
+              onClick={toggleTheme}
+              className="text-[var(--af-muted)] hover:text-[var(--af-text)] transition cursor-pointer p-1.5 rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 hover:bg-[var(--af-surface-elevated)]"
+              title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            >
+              {theme === "dark" ? (
+                <Sun className="h-4 w-4 text-[var(--af-accent)]" />
+              ) : (
+                <Moon className="h-4 w-4 text-[var(--af-accent)]" />
+              )}
+            </button>
+
+            <Link href="/notifications" className="relative text-[var(--af-muted)] hover:text-[var(--af-text)] transition">
               <Bell className="h-5 w-5" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-[var(--af-accent)] text-3xs font-extrabold text-[#042f2e] flex items-center justify-center">

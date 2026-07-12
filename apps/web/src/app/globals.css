@@ -152,4 +152,29 @@
     font-family: var(--font-sans);
     min-height: 100vh;
   }
+  body, aside, header, main, div, button, table, tr, td, th {
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+  }
+}
+
+/* Light mode utility overrides to keep hardcoded layout elements readable */
+html:not(.dark) {
+  .text-white {
+    color: var(--foreground) !important;
+  }
+  .hover\:text-white:hover {
+    color: var(--foreground) !important;
+  }
+  .bg-\[\#0f1419\] {
+    background-color: var(--background) !important;
+  }
+  .text-neutral-300, .text-neutral-200, .text-neutral-400 {
+    color: #536471 !important;
+  }
+  .text-neutral-600 {
+    color: #8b98a5 !important;
+  }
+  input.text-white, select.text-white, textarea.text-white {
+    color: var(--foreground) !important;
+  }
 }

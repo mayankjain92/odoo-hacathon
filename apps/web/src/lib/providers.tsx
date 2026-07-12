@@ -6,6 +6,7 @@ import { useState } from "react";
 import { MswProvider } from "@/mocks/msw-provider";
 
 import { apiFetch } from "@/lib/api";
+import { ThemeProvider } from "./theme-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [client] = useState(
@@ -30,7 +31,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={client}>
       <MswProvider>
-        {children}
+        <ThemeProvider>
+          {children}
+        </ThemeProvider>
       </MswProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
