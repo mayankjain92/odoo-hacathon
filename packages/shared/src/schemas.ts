@@ -203,3 +203,4 @@ export type PromoteUserInput = z.infer<typeof promoteUserSchema>;
 export type AllocateAssetInput = z.infer<typeof allocateAssetSchema>;
 export type CreateTransferRequestInput = z.infer<typeof createTransferRequestSchema>;
 export type ResolveTransferInput = z.infer<typeof resolveTransferSchema>;
+export type CreateMaintenanceInput = z.infer<typeof createMaintenanceSchema>;
