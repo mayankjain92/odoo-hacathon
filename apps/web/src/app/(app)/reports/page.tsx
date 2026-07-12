@@ -86,6 +86,15 @@ export default function ReportsPage() {
     ...qOpts,
   });
 
+  const { data: lifecycleAlerts } = useQuery<any>({
+    queryKey: ["reports-lifecycle-alerts", dateRange],
+    queryFn: () => apiFetch<any>(`/reports/lifecycle-alerts${buildParams()}`),
+    ...qOpts,
+  });
+
+  const nearingRetirement = lifecycleAlerts?.nearingRetirement ?? [];
+  const dueForMaintenance = lifecycleAlerts?.dueForMaintenance ?? [];
+
   // Build chart data
   const statusChartData = (statusDist?.distribution ?? []).map((d: any) => ({ name: d.status, value: d.count, pct: d.percentage }));
   const utilizationTopData = (utilData?.data ?? []).slice(0, 10).map((d: any) => ({ name: d.assetTag, utilization: d.utilizationPercent, hours: d.allocatedHours }));
@@ -367,6 +376,77 @@ export default function ReportsPage() {
             </div>
           </div>
         )}
+
+        {/* Lifecycle Alerts: nearing retirement / due for maintenance */}
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="rounded-[var(--af-radius)] border border-[var(--af-border)] bg-[var(--af-surface)]/40 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Clock className="h-4 w-4 text-amber-400" />
+              <h3 className="text-sm font-semibold text-white">Nearing Retirement</h3>
+              <span className="ml-auto text-2xs text-[var(--af-muted)]">{nearingRetirement.length} assets</span>
+            </div>
+            {nearingRetirement.length === 0 ? (
+              <p className="py-6 text-center text-xs text-[var(--af-muted)]">No aging assets flagged.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-[var(--af-border)] text-[var(--af-muted)]">
+                    <tr>
+                      <th className="py-2 pr-4">Tag</th>
+                      <th className="py-2 pr-4">Name</th>
+                      <th className="py-2 pr-4">Age</th>
+                      <th className="py-2 pr-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--af-border)]">
+                    {nearingRetirement.slice(0, 8).map((a: any) => (
+                      <tr key={a.assetId} className="hover:bg-[var(--af-surface)]/20">
+                        <td className="py-2 pr-4 font-mono text-[var(--af-accent)]">{a.assetTag}</td>
+                        <td className="py-2 pr-4 text-white">{a.name}</td>
+                        <td className="py-2 pr-4 font-semibold text-amber-400">{a.ageYears}y</td>
+                        <td className="py-2 pr-4 text-[var(--af-muted)]">{a.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-[var(--af-radius)] border border-[var(--af-border)] bg-[var(--af-surface)]/40 p-5">
+            <div className="mb-4 flex items-center gap-2">
+              <Wrench className="h-4 w-4 text-rose-400" />
+              <h3 className="text-sm font-semibold text-white">Due for Maintenance</h3>
+              <span className="ml-auto text-2xs text-[var(--af-muted)]">{dueForMaintenance.length} assets</span>
+            </div>
+            {dueForMaintenance.length === 0 ? (
+              <p className="py-6 text-center text-xs text-[var(--af-muted)]">No chronic-maintenance assets flagged.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="border-b border-[var(--af-border)] text-[var(--af-muted)]">
+                    <tr>
+                      <th className="py-2 pr-4">Tag</th>
+                      <th className="py-2 pr-4">Name</th>
+                      <th className="py-2 pr-4">Requests</th>
+                      <th className="py-2 pr-4">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[var(--af-border)]">
+                    {dueForMaintenance.slice(0, 8).map((a: any) => (
+                      <tr key={a.assetId} className="hover:bg-[var(--af-surface)]/20">
+                        <td className="py-2 pr-4 font-mono text-[var(--af-accent)]">{a.assetTag}</td>
+                        <td className="py-2 pr-4 text-white">{a.name}</td>
+                        <td className="py-2 pr-4 font-bold text-rose-400">{a.maintenanceCount}</td>
+                        <td className="py-2 pr-4 text-[var(--af-muted)]">{a.status}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

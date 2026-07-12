@@ -14,7 +14,10 @@ import {
   Clock,
   ArrowUpRight,
   TrendingUp,
-  Box
+  Box,
+  PackageCheck,
+  ArrowLeftRight,
+  Undo2
 } from "lucide-react";
 import { Role } from "@assetflow/shared";
 
@@ -65,8 +68,11 @@ export default function DashboardPage() {
   // KPI numbers come from the server; fall back to 0 while loading
   const totalAssets = kpis?.totalAssets ?? 0;
   const availableAssets = kpis?.availableAssets ?? 0;
+  const allocatedAssets = kpis?.allocatedAssets ?? 0;
   const maintenanceAssets = kpis?.underMaintenanceAssets ?? 0;
   const activeBookings = kpis?.activeBookingsCount ?? 0;
+  const pendingTransfers = kpis?.pendingTransfers ?? 0;
+  const upcomingReturns = kpis?.upcomingReturns ?? 0;
 
   // Calculate Overdue Allocations: expectedReturnAt is past & returnedAt is null
   const now = new Date();
@@ -209,8 +215,11 @@ export default function DashboardPage() {
         {[
           { label: "Total Asset Register", val: totalAssets, sub: "Items indexed", icon: Box, color: "text-white" },
           { label: "Available Stock", val: availableAssets, sub: "Ready for allocation", icon: CheckCircle, color: "text-[var(--af-success)]" },
+          { label: "Assets Allocated", val: allocatedAssets, sub: "Currently held", icon: PackageCheck, color: "text-[var(--af-accent)]" },
           { label: "Under Maintenance", val: maintenanceAssets, sub: "In repair lifecycle", icon: Clock, color: "text-[var(--af-warning)]" },
-          { label: "Active Bookings", val: activeBookings, sub: "Calendar reservations", icon: CalendarRange, color: "text-[var(--af-accent)]" }
+          { label: "Active Bookings", val: activeBookings, sub: "Calendar reservations", icon: CalendarRange, color: "text-[var(--af-accent)]" },
+          { label: "Pending Transfers", val: pendingTransfers, sub: "Awaiting approval", icon: ArrowLeftRight, color: "text-indigo-400" },
+          { label: "Upcoming Returns", val: upcomingReturns, sub: "Due within 7 days", icon: Undo2, color: "text-[var(--af-success)]" }
         ].map((card, idx) => {
           const Icon = card.icon;
           return (

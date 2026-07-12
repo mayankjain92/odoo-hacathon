@@ -33,7 +33,9 @@ import {
   FileCheck,
   CheckCircle,
   HelpCircle,
-  AlertCircle
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 export default function BookingsPage() {
@@ -42,6 +44,13 @@ export default function BookingsPage() {
   // Dialog/Form State
   const [showBookForm, setShowBookForm] = useState(false);
   const [bookingError, setBookingError] = useState<string | null>(null);
+
+  // Calendar State
+  const [calAssetId, setCalAssetId] = useState<string>("");
+  const [calMonth, setCalMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
 
   // Queries
   const { data: user } = useQuery<any>({ queryKey: ["auth-user"] });
@@ -57,6 +66,14 @@ export default function BookingsPage() {
     queryFn: () => apiFetch<{ data: any[] }>("/bookings"),
   });
   const bookings = bookingsRes?.data || [];
+
+  // Bookings for the calendar's selected resource
+  const { data: assetBookingsRes } = useQuery<any>({
+    queryKey: ["asset-bookings", calAssetId],
+    queryFn: () => apiFetch<any>(`/bookings/assets/${calAssetId}`),
+    enabled: !!calAssetId,
+  });
+  const calBookings = assetBookingsRes?.bookings || [];
 
   const { data: employeesRes } = useQuery<any>({
     queryKey: ["employees"],
@@ -105,6 +122,22 @@ export default function BookingsPage() {
     },
   });
 
+  // Calendar derivations for the selected resource
+  const bookableAssets = assets.filter((a: any) => a.isSharedBookable);
+  const calYear = calMonth.getFullYear();
+  const calMonthIdx = calMonth.getMonth();
+  const daysInMonth = new Date(calYear, calMonthIdx + 1, 0).getDate();
+  const leadingBlanks = new Date(calYear, calMonthIdx, 1).getDay();
+  const today = new Date();
+  const bookingsByDay: Record<number, any[]> = {};
+  for (const b of calBookings) {
+    const s = new Date(b.startsAt);
+    if (s.getFullYear() === calYear && s.getMonth() === calMonthIdx) {
+      const day = s.getDate();
+      (bookingsByDay[day] = bookingsByDay[day] || []).push(b);
+    }
+  }
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
       {/* Title Panel */}
@@ -127,6 +160,99 @@ export default function BookingsPage() {
         </button>
       </div>
 
+      {/* Resource Calendar */}
+      <div className="space-y-4 rounded-[var(--af-radius)] border border-[var(--af-border)] bg-[var(--af-surface)]/40 p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-[var(--af-accent)]" />
+            <h3 className="text-sm font-semibold text-white">Resource Calendar</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <select
+              value={calAssetId}
+              onChange={(e) => setCalAssetId(e.target.value)}
+              className="rounded-lg border border-[var(--af-border)] bg-[var(--af-surface)]/60 px-3 py-2 text-xs text-white outline-none focus:border-[var(--af-accent)]"
+            >
+              <option value="">Select a resource…</option>
+              {bookableAssets.map((a: any) => (
+                <option key={a.id} value={a.id}>{a.assetTag} — {a.name}</option>
+              ))}
+            </select>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCalMonth(new Date(calYear, calMonthIdx - 1, 1))}
+                className="rounded-md border border-[var(--af-border)] p-1.5 text-[var(--af-muted)] transition hover:text-white cursor-pointer"
+                aria-label="Previous month"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="min-w-[7.5rem] text-center text-xs font-semibold text-white">
+                {calMonth.toLocaleString("default", { month: "long", year: "numeric" })}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCalMonth(new Date(calYear, calMonthIdx + 1, 1))}
+                className="rounded-md border border-[var(--af-border)] p-1.5 text-[var(--af-muted)] transition hover:text-white cursor-pointer"
+                aria-label="Next month"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {!calAssetId ? (
+          <p className="py-8 text-center text-xs text-[var(--af-muted)]">
+            Select a bookable resource to view its reservation calendar.
+          </p>
+        ) : (
+          <div className="grid grid-cols-7 gap-1.5">
+            {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((d) => (
+              <div key={d} className="py-1 text-center text-3xs font-semibold uppercase tracking-wider text-[var(--af-muted)]">{d}</div>
+            ))}
+            {Array.from({ length: leadingBlanks }).map((_, i) => (
+              <div key={`blank-${i}`} className="aspect-square rounded-md" />
+            ))}
+            {Array.from({ length: daysInMonth }).map((_, i) => {
+              const day = i + 1;
+              const dayBookings = bookingsByDay[day] || [];
+              const isToday =
+                today.getFullYear() === calYear &&
+                today.getMonth() === calMonthIdx &&
+                today.getDate() === day;
+              return (
+                <div
+                  key={day}
+                  className={`aspect-square overflow-hidden rounded-md border p-1.5 text-left ${
+                    dayBookings.length
+                      ? "border-[var(--af-accent)]/40 bg-[var(--af-accent)]/5"
+                      : "border-[var(--af-border)] bg-[var(--af-surface)]/30"
+                  } ${isToday ? "ring-1 ring-[var(--af-accent)]" : ""}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className={`text-2xs font-semibold ${isToday ? "text-[var(--af-accent)]" : "text-neutral-300"}`}>{day}</span>
+                    {dayBookings.length > 0 && (
+                      <span className="text-3xs font-bold text-[var(--af-accent)]">{dayBookings.length}</span>
+                    )}
+                  </div>
+                  <div className="mt-0.5 space-y-0.5">
+                    {dayBookings.slice(0, 2).map((b: any) => (
+                      <div key={b.id} className="truncate rounded bg-[var(--af-accent)]/15 px-1 py-0.5 text-3xs text-[var(--af-accent)]">
+                        {new Date(b.startsAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                    ))}
+                    {dayBookings.length > 2 && (
+                      <div className="text-3xs text-[var(--af-muted)]">+{dayBookings.length - 2}</div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Main Agenda Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Reservation Timeline Column */}
@@ -147,8 +273,8 @@ export default function BookingsPage() {
               bookings.map((booking: any) => {
                 const asset = assets.find(a => a.id === booking.assetId);
                 const emp = employees.find((e: any) => e.id === booking.userId);
-                const start = new Date(booking.startedAt);
-                const end = new Date(booking.endedAt);
+                const start = new Date(booking.startsAt);
+                const end = new Date(booking.endsAt);
 
                 return (
                   <div
