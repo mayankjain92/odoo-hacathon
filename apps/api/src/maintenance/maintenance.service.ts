@@ -4,6 +4,7 @@ import {
   MaintenanceStatus,
   AssetStatus,
   ErrorCode,
+  NotificationType,
   buildPaginationMeta,
   type PaginatedResponse,
 } from "@assetflow/shared";
@@ -78,6 +79,7 @@ export class MaintenanceService {
   ) {
     const request = await this.prisma.maintenanceRequest.findUnique({
       where: { id },
+      include: { asset: { select: { name: true, assetTag: true } } },
     });
     if (!request) {
       throw new ApiException(
@@ -130,7 +132,7 @@ export class MaintenanceService {
       }
 
       // 3. Update the request
-      return tx.maintenanceRequest.update({
+      const updated = await tx.maintenanceRequest.update({
         where: { id },
         data: {
           status: toStatus,
@@ -138,6 +140,23 @@ export class MaintenanceService {
         },
         include: maintenanceInclude,
       });
+
+      // 4. Notify the requester when the request is approved or rejected
+      if (
+        toStatus === MaintenanceStatus.Approved ||
+        toStatus === MaintenanceStatus.Rejected
+      ) {
+        await tx.notification.create({
+          data: {
+            userId: request.requesterId,
+            title: `Maintenance ${toStatus}`,
+            body: `Your maintenance request for "${request.asset.name}" (${request.asset.assetTag}) was ${toStatus.toLowerCase()}.`,
+            type: NotificationType.MaintenanceUpdate,
+          },
+        });
+      }
+
+      return updated;
     });
 
     await this.logActivity(

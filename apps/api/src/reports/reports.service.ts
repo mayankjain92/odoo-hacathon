@@ -610,6 +610,115 @@ export class ReportsService {
   }
 
   // ==========================================
+  // LIFECYCLE ALERTS — nearing retirement / due for maintenance
+  // ==========================================
+
+  async getLifecycleAlerts(query: ReportDateRangeDto) {
+    const now = new Date();
+    const retirementAgeYears = 5;
+    const chronicMaintenanceThreshold = 2; // >= this many requests => due for service
+    const retirementThreshold = new Date(
+      now.getFullYear() - retirementAgeYears,
+      now.getMonth(),
+      now.getDate(),
+    );
+
+    const scope: any = {};
+    if (query.departmentId) scope.departmentId = query.departmentId;
+    if (query.categoryId) scope.categoryId = query.categoryId;
+
+    // Nearing retirement: oldest assets still in service
+    const oldAssets = await this.prisma.asset.findMany({
+      where: {
+        ...scope,
+        acquisitionDate: { lte: retirementThreshold },
+        status: { notIn: ["Retired", "Disposed"] },
+      },
+      select: {
+        id: true,
+        name: true,
+        assetTag: true,
+        status: true,
+        acquisitionDate: true,
+        category: { select: { name: true } },
+        department: { select: { name: true } },
+      },
+      orderBy: { acquisitionDate: "asc" },
+      take: 50,
+    });
+
+    const yearMs = 365.25 * 24 * 60 * 60 * 1000;
+    const nearingRetirement = oldAssets.map((a) => ({
+      assetId: a.id,
+      assetTag: a.assetTag,
+      name: a.name,
+      status: a.status,
+      category: a.category?.name || null,
+      department: a.department?.name || null,
+      acquisitionDate: a.acquisitionDate.toISOString(),
+      ageYears: Math.floor((now.getTime() - a.acquisitionDate.getTime()) / yearMs),
+    }));
+
+    // Due for maintenance: assets with a chronic maintenance history
+    const freq = await this.prisma.maintenanceRequest.groupBy({
+      by: ["assetId"],
+      _count: { id: true },
+      _max: { createdAt: true },
+    });
+
+    const chronicIds = freq
+      .filter((f) => f._count.id >= chronicMaintenanceThreshold)
+      .map((f) => f.assetId);
+
+    const chronicAssets = chronicIds.length
+      ? await this.prisma.asset.findMany({
+          where: {
+            ...scope,
+            id: { in: chronicIds },
+            status: { notIn: ["Retired", "Disposed", "UnderMaintenance"] },
+          },
+          select: {
+            id: true,
+            name: true,
+            assetTag: true,
+            status: true,
+            category: { select: { name: true } },
+            department: { select: { name: true } },
+          },
+        })
+      : [];
+
+    const freqMap = new Map(freq.map((f) => [f.assetId, f]));
+    const dueForMaintenance = chronicAssets
+      .map((a) => {
+        const f = freqMap.get(a.id);
+        return {
+          assetId: a.id,
+          assetTag: a.assetTag,
+          name: a.name,
+          status: a.status,
+          category: a.category?.name || null,
+          department: a.department?.name || null,
+          maintenanceCount: f?._count.id ?? 0,
+          lastMaintenanceAt: f?._max.createdAt
+            ? f._max.createdAt.toISOString()
+            : null,
+        };
+      })
+      .sort((a, b) => b.maintenanceCount - a.maintenanceCount);
+
+    return {
+      thresholds: { retirementAgeYears, chronicMaintenanceThreshold },
+      summary: {
+        nearingRetirementCount: nearingRetirement.length,
+        dueForMaintenanceCount: dueForMaintenance.length,
+      },
+      nearingRetirement,
+      dueForMaintenance,
+    };
+  }
+
+  // ==========================================
   // CSV EXPORT — ASSETS
   // ==========================================
 

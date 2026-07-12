@@ -18,9 +18,11 @@ import {
   Wrench,
   DollarSign,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ScanLine
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+import { QrScanner } from "@/components/qr-scanner";
 
 export default function AssetsPage() {
   const queryClient = useQueryClient();
@@ -36,6 +38,7 @@ export default function AssetsPage() {
   // Modals & Panels State
   const [showRegForm, setShowRegForm] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState<any | null>(null);
+  const [showScanner, setShowScanner] = useState(false);
 
   // Trigger form open via query param (e.g. from Dashboard quick action)
   useEffect(() => {
@@ -163,8 +166,15 @@ export default function AssetsPage() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="w-full rounded-lg border border-[var(--af-border)] bg-[var(--af-surface)]/60 py-2.5 pl-10 pr-4 text-xs text-white placeholder-neutral-500 outline-none focus:border-[var(--af-accent)]"
+            className="w-full rounded-lg border border-[var(--af-border)] bg-[var(--af-surface)]/60 py-2.5 pl-10 pr-24 text-xs text-white placeholder-neutral-500 outline-none focus:border-[var(--af-accent)]"
           />
+          <button
+            type="button"
+            onClick={() => setShowScanner(true)}
+            className="absolute right-2 top-1.5 flex items-center gap-1.5 rounded-md border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/70 px-2.5 py-1.5 text-2xs font-semibold text-[var(--af-accent)] transition hover:bg-[var(--af-surface-elevated)] cursor-pointer"
+          >
+            <ScanLine className="h-3.5 w-3.5" /> Scan QR
+          </button>
         </div>
 
         <div className="flex flex-wrap gap-2">
@@ -475,6 +485,18 @@ export default function AssetsPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {showScanner && (
+        <QrScanner
+          onClose={() => setShowScanner(false)}
+          onScan={(value) => {
+            // QR payload is the asset tag; feed it straight into search
+            setSearch(value.trim());
+            setPage(1);
+            setShowScanner(false);
+          }}
+        />
       )}
     </div>
   );

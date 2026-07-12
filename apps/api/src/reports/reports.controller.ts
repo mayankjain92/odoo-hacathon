@@ -83,6 +83,14 @@ export class ReportsController {
     return this.reportsService.getAllocationTrend(query);
   }
 
+  // ─── Lifecycle Alerts ──────────────────────────────────────────
+  @Get("lifecycle-alerts")
+  @Roles(Role.Admin, Role.AssetManager, Role.DepartmentHead)
+  @ApiOperation({ summary: "Assets nearing retirement (by age) and due for maintenance (chronic/stale)" })
+  getLifecycleAlerts(@Query() query: ReportDateRangeDto) {
+    return this.reportsService.getLifecycleAlerts(query);
+  }
+
   // ─── CSV EXPORTS ───────────────────────────────────────────────
 
   @Get("export/assets")
