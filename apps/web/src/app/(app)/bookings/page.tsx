@@ -5,7 +5,24 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiFetch, ApiClientError } from "@/lib/api";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createBookingSchema } from "@assetflow/shared";
+import { z } from "zod";
+
+const bookingFormSchema = z
+  .object({
+    assetId: z.string().min(1, "Asset is required"),
+    startDate: z.string().min(1, "Required"),
+    startTime: z.string().min(1, "Required"),
+    endDate: z.string().min(1, "Required"),
+    endTime: z.string().min(1, "Required"),
+  })
+  .refine(
+    (data) => {
+      const start = new Date(`${data.startDate}T${data.startTime}`);
+      const end = new Date(`${data.endDate}T${data.endTime}`);
+      return end > start;
+    },
+    { message: "End must be after start", path: ["endTime"] }
+  );
 import {
   CalendarDays,
   Clock,
@@ -54,11 +71,13 @@ export default function BookingsPage() {
     reset: resetBooking,
     formState: { errors: bookingErrors },
   } = useForm({
-    resolver: zodResolver(createBookingSchema),
+    resolver: zodResolver(bookingFormSchema),
     defaultValues: {
       assetId: "",
-      startsAt: "",
-      endsAt: "",
+      startDate: "",
+      startTime: "",
+      endDate: "",
+      endTime: "",
     },
   });
 
@@ -70,8 +89,8 @@ export default function BookingsPage() {
         method: "POST",
         body: JSON.stringify({
           assetId: data.assetId,
-          startsAt: new Date(data.startsAt).toISOString(),
-          endsAt: new Date(data.endsAt).toISOString(),
+          startsAt: new Date(`${data.startDate}T${data.startTime}`).toISOString(),
+          endsAt: new Date(`${data.endDate}T${data.endTime}`).toISOString(),
         }),
       });
     },
@@ -235,22 +254,38 @@ export default function BookingsPage() {
 
               <div className="space-y-1">
                 <label className="text-2xs font-bold uppercase tracking-wider text-[var(--af-muted)]">Start Date & Time</label>
-                <input
-                  type="datetime-local"
-                  {...registerBooking("startsAt")}
-                  className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
-                />
-                {bookingErrors.startsAt && <p className="text-3xs text-red-400">{bookingErrors.startsAt.message}</p>}
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    {...registerBooking("startDate")}
+                    className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
+                  />
+                  <input
+                    type="time"
+                    {...registerBooking("startTime")}
+                    className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
+                  />
+                </div>
+                {bookingErrors.startDate && <p className="text-3xs text-red-400">{bookingErrors.startDate?.message?.toString()}</p>}
+                {bookingErrors.startTime && <p className="text-3xs text-red-400">{bookingErrors.startTime?.message?.toString()}</p>}
               </div>
 
               <div className="space-y-1">
                 <label className="text-2xs font-bold uppercase tracking-wider text-[var(--af-muted)]">End Date & Time</label>
-                <input
-                  type="datetime-local"
-                  {...registerBooking("endsAt")}
-                  className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
-                />
-                {bookingErrors.endsAt && <p className="text-3xs text-red-400">{bookingErrors.endsAt.message}</p>}
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="date"
+                    {...registerBooking("endDate")}
+                    className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
+                  />
+                  <input
+                    type="time"
+                    {...registerBooking("endTime")}
+                    className="w-full rounded-md border border-[var(--af-border)] bg-[var(--af-bg)] px-3 py-2.5 text-xs text-white outline-none focus:border-[var(--af-accent)]"
+                  />
+                </div>
+                {bookingErrors.endDate && <p className="text-3xs text-red-400">{bookingErrors.endDate?.message?.toString()}</p>}
+                {bookingErrors.endTime && <p className="text-3xs text-red-400">{bookingErrors.endTime?.message?.toString()}</p>}
               </div>
             </form>
           </div>

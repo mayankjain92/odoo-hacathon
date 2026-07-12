@@ -54,13 +54,18 @@ export default function AssetsPage() {
   });
   const categories = catsRes?.data || [];
 
-  // Fetch Assets with filters
   const { data: assetsRes, isLoading } = useQuery<any>({
     queryKey: ["assets", search, categoryFilter, statusFilter, page],
-    queryFn: () =>
-      apiFetch(
-        `/assets?q=${search}&categoryId=${categoryFilter}&status=${statusFilter}&page=${page}&pageSize=${pageSize}`
-      ),
+    queryFn: () => {
+      const params = new URLSearchParams();
+      if (search) params.append("q", search);
+      if (categoryFilter) params.append("categoryId", categoryFilter);
+      if (statusFilter && statusFilter !== 'All') params.append("status", statusFilter);
+      params.append("page", page.toString());
+      params.append("pageSize", pageSize.toString());
+      
+      return apiFetch(`/assets?${params.toString()}`);
+    },
   });
 
   const assets = assetsRes?.data || [];

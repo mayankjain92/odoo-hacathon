@@ -125,8 +125,8 @@ export const allocateAssetSchema = z.object({
 export const createBookingSchema = z
   .object({
     assetId: z.string().cuid(),
-    startsAt: z.string().datetime(),
-    endsAt: z.string().datetime(),
+    startsAt: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Invalid date string" }),
+    endsAt: z.string().refine(val => !isNaN(Date.parse(val)), { message: "Invalid date string" }),
     purpose: z.string().max(500).optional(),
   })
   .refine((v) => new Date(v.endsAt) > new Date(v.startsAt), {
