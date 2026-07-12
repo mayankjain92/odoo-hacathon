@@ -171,7 +171,7 @@ export default function AllocationsPage() {
   const resolveTransferMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "Approved" | "Rejected" }) => {
       return apiFetch(`/allocations/transfers/${id}/resolve`, {
-        method: "POST",
+        method: "PUT",
         body: JSON.stringify({ status }),
       });
     },
@@ -334,8 +334,8 @@ export default function AllocationsPage() {
               ) : (
                 transfers.map((tr: any) => {
                   const asset = assets.find((a: any) => a.id === tr.assetId);
-                  const requester = employees.find((e: any) => e.id === tr.requestingEmployeeId);
-                  const holder = employees.find((e: any) => e.id === tr.currentHolderId);
+                  const requester = employees.find((e: any) => e.id === tr.requesterId);
+                  const holder = employees.find((e: any) => e.id === tr.approverId);
 
                   return (
                     <tr key={tr.id} className="hover:bg-[var(--af-surface)]/20 transition">
@@ -356,7 +356,7 @@ export default function AllocationsPage() {
                       </td>
                       {isApprover && (
                         <td className="px-6 py-4 text-right">
-                          {tr.status === "Pending" && (
+                          {tr.status === "Requested" && (
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => resolveTransferMutation.mutate({ id: tr.id, status: "Approved" })}

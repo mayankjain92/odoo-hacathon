@@ -223,7 +223,6 @@ export default function AssetsPage() {
               </tr>
             ) : (
               assets.map((asset: any) => {
-                const catObj = categories.find(c => c.id === asset.categoryId);
                 return (
                   <tr
                     key={asset.id}
@@ -234,7 +233,7 @@ export default function AssetsPage() {
                       {asset.assetTag}
                     </td>
                     <td className="px-6 py-4 font-medium text-white">{asset.name}</td>
-                    <td className="px-6 py-4">{catObj ? catObj.name : "Hardware"}</td>
+                    <td className="px-6 py-4">{asset.category?.name ?? "Hardware"}</td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-2xs font-semibold ${
                         asset.status === AssetStatus.Available ? "bg-emerald-950 text-emerald-400 border border-emerald-800/40" :
@@ -410,7 +409,7 @@ export default function AssetsPage() {
                   <div className="flex justify-between py-2">
                     <span className="text-[var(--af-muted)]">Category</span>
                     <span className="text-white font-medium">
-                      {categories.find(c => c.id === selectedAsset.categoryId)?.name || "N/A"}
+                      {selectedAsset.category?.name ?? selectedAsset.categoryId ?? "N/A"}
                     </span>
                   </div>
                   <div className="flex justify-between py-2">

@@ -26,12 +26,6 @@ interface User {
   departmentId: string | null;
 }
 
-const initialUsers = [
-  { id: "usr-1", name: "Alice Admin" },
-  { id: "usr-2", name: "Manny Manager" },
-  { id: "usr-3", name: "Harvey Head" },
-  { id: "usr-4", name: "Emily Employee" },
-];
 
 export default function DashboardPage() {
   // 1. Get logged-in user
@@ -63,12 +57,19 @@ export default function DashboardPage() {
     queryFn: () => apiFetch<{ data: any[] }>("/allocations"),
   });
 
+  // 6. Fetch employees to resolve names for overdue allocations
+  const { data: employeesRes } = useQuery<{ data: any[] }>({
+    queryKey: ["employees"],
+    queryFn: () => apiFetch<{ data: any[] }>("/org/employees?pageSize=200"),
+  });
+
   if (!user) return null;
 
   const assets = assetsRes?.data || [];
   const maintenance = maintenanceRes?.data || [];
   const bookings = bookingsRes?.data || [];
   const allocations = allocationsRes?.data || [];
+  const employees = employeesRes?.data || [];
 
   // Compute live KPIs
   const totalAssets = assets.length;
@@ -85,7 +86,9 @@ export default function DashboardPage() {
     return new Date(al.expectedReturnAt) < now;
   }).map(al => {
     const asset = assets.find(a => a.id === al.assetId);
-    const employee = user.role !== Role.Employee ? initialUsers.find(u => u.id === al.employeeId) : user;
+    const employee = user.role !== Role.Employee
+      ? employees.find((u: any) => u.id === al.employeeId)
+      : user;
     return {
       ...al,
       assetName: asset ? asset.name : "Asset",
