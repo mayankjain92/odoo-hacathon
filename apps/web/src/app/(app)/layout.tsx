@@ -16,8 +16,6 @@ import {
   Bell,
   Network,
   LogOut,
-  UserCheck,
-  ChevronDown,
   Menu,
   X,
   Sun,
@@ -55,7 +53,6 @@ export default function AppShellLayout({
   const pathname = usePathname();
   const queryClient = useQueryClient();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   // Fetch current user session
@@ -81,18 +78,6 @@ export default function AppShellLayout({
 
   const unreadCount = notifications?.data.filter(n => !n.read).length || 0;
 
-  // Session swap mutation
-  const swapMutation = useMutation({
-    mutationFn: (userId: string) => apiFetch("/auth/session-swap", {
-      method: "POST",
-      body: JSON.stringify({ userId }),
-    }),
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      setDropdownOpen(false);
-      router.refresh();
-    }
-  });
 
   const logoutMutation = useMutation({
     mutationFn: () => apiFetch("/auth/logout", { method: "POST" }),
@@ -189,53 +174,7 @@ export default function AppShellLayout({
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Quick Role-Switcher dropdown for hackathon testing */}
-            <div className="relative">
-              <button
-                onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 px-3.5 py-1.5 text-xs text-white hover:bg-[var(--af-surface-elevated)] transition cursor-pointer"
-              >
-                <UserCheck className="h-4 w-4 text-[var(--af-accent)]" />
-                <span className="font-mono">Demo Role: {user.role}</span>
-                <ChevronDown className="h-3 w-3" />
-              </button>
 
-              {dropdownOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)] p-1.5 shadow-xl animate-in fade-in-50 slide-in-from-top-2">
-                  <div className="px-2 py-1 text-2xs uppercase tracking-wider text-[var(--af-muted)] font-semibold border-b border-[var(--af-border)] mb-1">
-                    Select Demo Account
-                  </div>
-                  <button
-                    onClick={() => swapMutation.mutate("usr-1")}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-[var(--af-surface)] transition cursor-pointer text-white"
-                  >
-                    <span>Alice Admin</span>
-                    <span className="font-mono text-2xs text-[var(--af-accent)]">Admin</span>
-                  </button>
-                  <button
-                    onClick={() => swapMutation.mutate("usr-2")}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-[var(--af-surface)] transition cursor-pointer text-white"
-                  >
-                    <span>Manny Manager</span>
-                    <span className="font-mono text-2xs text-[var(--af-accent)]">AssetManager</span>
-                  </button>
-                  <button
-                    onClick={() => swapMutation.mutate("usr-3")}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-[var(--af-surface)] transition cursor-pointer text-white"
-                  >
-                    <span>Harvey Head</span>
-                    <span className="font-mono text-2xs text-[var(--af-accent)]">DeptHead</span>
-                  </button>
-                  <button
-                    onClick={() => swapMutation.mutate("usr-4")}
-                    className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-xs hover:bg-[var(--af-surface)] transition cursor-pointer text-white"
-                  >
-                    <span>Emily Employee</span>
-                    <span className="font-mono text-2xs text-[var(--af-accent)]">Employee</span>
-                  </button>
-                </div>
-              )}
-            </div>
 
             <button
               onClick={toggleTheme}

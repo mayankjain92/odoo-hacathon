@@ -18,7 +18,6 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
@@ -47,11 +46,6 @@ export default function LoginPage() {
     mutation.mutate(data);
   };
 
-  const handleQuickLogin = (email: string) => {
-    setValue("email", email);
-    setValue("password", "password123");
-    onSubmit({ email, password: "password123" });
-  };
 
   return (
     <div className="flex min-h-screen items-center justify-center px-4 py-12">
@@ -133,40 +127,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="relative flex py-2 items-center">
-          <div className="flex-grow border-t border-[var(--af-border)]"></div>
-          <span className="flex-shrink mx-4 text-xs uppercase tracking-wider text-[var(--af-muted)]">
-            Quick demo login
-          </span>
-          <div className="flex-grow border-t border-[var(--af-border)]"></div>
-        </div>
 
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <button
-            onClick={() => handleQuickLogin("admin@assetflow.com")}
-            className="rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 py-2 text-center text-white hover:border-[var(--af-accent)]/50 transition cursor-pointer"
-          >
-            Admin Profile
-          </button>
-          <button
-            onClick={() => handleQuickLogin("manager@assetflow.com")}
-            className="rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 py-2 text-center text-white hover:border-[var(--af-accent)]/50 transition cursor-pointer"
-          >
-            Asset Manager
-          </button>
-          <button
-            onClick={() => handleQuickLogin("head@assetflow.com")}
-            className="rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 py-2 text-center text-white hover:border-[var(--af-accent)]/50 transition cursor-pointer"
-          >
-            IT Dept Head
-          </button>
-          <button
-            onClick={() => handleQuickLogin("employee@assetflow.com")}
-            className="rounded-lg border border-[var(--af-border)] bg-[var(--af-surface-elevated)]/60 py-2 text-center text-white hover:border-[var(--af-accent)]/50 transition cursor-pointer"
-          >
-            IT Employee
-          </button>
-        </div>
 
         <div className="text-center text-sm text-[var(--af-muted)]">
           Need an account?{" "}

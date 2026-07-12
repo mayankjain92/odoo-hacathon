@@ -12,55 +12,53 @@ const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const passwordHash = await bcrypt.hash("Admin@12345", 10);
+  console.log("Cleaning database tables...");
 
-  const admin = await prisma.user.upsert({
-    where: { email: "admin@assetflow.local" },
-    update: {},
-    create: {
-      name: "System Admin",
-      email: "admin@assetflow.local",
+  // Break circular foreign key relations
+  await prisma.department.updateMany({ data: { headId: null } });
+  await prisma.user.updateMany({ data: { departmentId: null } });
+
+  // Delete dependent rows
+  await prisma.activityLog.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.auditItem.deleteMany();
+  await prisma.auditCycleAuditor.deleteMany();
+  await prisma.auditCycle.deleteMany();
+  await prisma.maintenanceRequest.deleteMany();
+  await prisma.booking.deleteMany();
+  await prisma.transferRequest.deleteMany();
+  await prisma.allocation.deleteMany();
+  await prisma.asset.deleteMany();
+  
+  // Delete independent core models
+  await prisma.assetCategory.deleteMany();
+  await prisma.department.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.assetTagSequence.deleteMany();
+
+  console.log("Creating clean System Administrator account...");
+
+  const passwordHash = await bcrypt.hash("adminpassword123", 10);
+  const admin = await prisma.user.create({
+    data: {
+      id: "admin-1",
+      name: "System Administrator",
+      email: "admin@assetflow.com",
       passwordHash,
       role: Role.Admin,
     },
   });
 
-  const engineering = await prisma.department.upsert({
-    where: { id: "seed-dept-engineering" },
-    update: {},
-    create: {
-      id: "seed-dept-engineering",
-      name: "Engineering",
-    },
+  // Initialize tag sequence counter
+  await prisma.assetTagSequence.create({
+    data: { id: 1, value: 0 },
   });
 
-  await prisma.assetCategory.upsert({
-    where: { name: "Electronics" },
-    update: {},
-    create: {
-      name: "Electronics",
-      description: "Laptops, phones, peripherals",
-      optionalFields: { warrantyMonths: 12 },
-    },
-  });
-
-  await prisma.assetCategory.upsert({
-    where: { name: "Furniture" },
-    update: {},
-    create: {
-      name: "Furniture",
-      description: "Desks, chairs, cabinets",
-    },
-  });
-
-  await prisma.assetTagSequence.upsert({
-    where: { id: 1 },
-    update: {},
-    create: { id: 1, value: 0 },
-  });
-
-  console.log("Seeded admin:", admin.email, "| dept:", engineering.name);
-  console.log("Login: admin@assetflow.local / Admin@12345");
+  console.log("-----------------------------------------");
+  console.log("Database reset and seeded successfully!");
+  console.log("Email: admin@assetflow.com");
+  console.log("Password: adminpassword123");
+  console.log("-----------------------------------------");
 }
 
 main()
