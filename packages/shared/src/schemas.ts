@@ -146,3 +146,7 @@ export const reportQuerySchema = z.object({
   to: z.string().datetime().optional(),
   departmentId: z.string().cuid().optional(),
 });
+
+export type AllocateAssetInput = z.infer<typeof allocateAssetSchema>;
+export type CreateTransferRequestInput = z.infer<typeof createTransferRequestSchema>;
+export type ResolveTransferInput = z.infer<typeof resolveTransferSchema>;
