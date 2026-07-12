@@ -8,6 +8,9 @@ import {
   MaintenanceStatus,
   Role,
   TransferStatus,
+  NotificationType,
+  ActivityAction,
+  EntityType,
 } from "./enums";
 import { paginationQuerySchema } from "./pagination";
 
@@ -24,6 +27,9 @@ export const maintenanceStatusSchema = enumSchema(MaintenanceStatus);
 export const maintenancePrioritySchema = enumSchema(MaintenancePriority);
 export const entityStatusSchema = enumSchema(EntityStatus);
 export const auditItemResultSchema = enumSchema(AuditItemResult);
+export const notificationTypeSchema = enumSchema(NotificationType);
+export const activityActionSchema = enumSchema(ActivityAction);
+export const entityTypeSchema = enumSchema(EntityType);
 
 export const signupSchema = z.object({
   name: z.string().min(1).max(120),
@@ -206,3 +212,17 @@ export type ResolveTransferInput = z.infer<typeof resolveTransferSchema>;
 export type CreateMaintenanceInput = z.infer<typeof createMaintenanceSchema>;
 export type CreateAuditCycleInput = z.infer<typeof createAuditCycleSchema>;
 export type RecordAuditItemInput = z.infer<typeof recordAuditItemSchema>;
+
+export const notificationQuerySchema = paginationQuerySchema.extend({
+  unreadOnly: z.coerce.boolean().optional().default(false),
+});
+
+export const activityLogQuerySchema = paginationQuerySchema.extend({
+  entityType: entityTypeSchema.optional(),
+  entityId: z.string().cuid().optional(),
+  actorId: z.string().cuid().optional(),
+  action: activityActionSchema.optional(),
+});
+
+export type NotificationQuery = z.infer<typeof notificationQuerySchema>;
+export type ActivityLogQuery = z.infer<typeof activityLogQuerySchema>;

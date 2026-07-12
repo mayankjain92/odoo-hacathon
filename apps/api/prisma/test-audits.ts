@@ -141,7 +141,7 @@ async function runTests() {
     assert.fail("Should have failed to record item");
   } catch (err: any) {
     assert.ok(err instanceof ApiException);
-    assert.strictEqual(err.getResponse().code, ErrorCode.INVALID_STATUS_TRANSITION);
+    assert.strictEqual((err.getResponse() as any).code, ErrorCode.INVALID_STATUS_TRANSITION);
     console.log("✓ TEST 2 PASSED");
   }
 
@@ -209,7 +209,7 @@ async function runTests() {
     assert.fail("Should have failed scope check");
   } catch (err: any) {
     assert.ok(err instanceof ApiException);
-    assert.strictEqual(err.getResponse().code, ErrorCode.VALIDATION_ERROR);
+    assert.strictEqual((err.getResponse() as any).code, ErrorCode.VALIDATION_ERROR);
     console.log("✓ TEST 5 PASSED");
   }
 
