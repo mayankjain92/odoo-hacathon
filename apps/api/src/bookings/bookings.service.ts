@@ -747,7 +747,8 @@ export class BookingsService {
    * hashtext collisions only reduce concurrency for unrelated assets, never correctness.
    */
   private async lockAsset(tx: any, assetId: string): Promise<void> {
-    await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${assetId}))`;
+    // $executeRaw: pg_advisory_xact_lock returns void; $queryRaw cannot deserialize it (P2010).
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${assetId}))`;
   }
 
   private async resetAssetStatusIfNoActiveBookings(tx: any, assetId: string) {

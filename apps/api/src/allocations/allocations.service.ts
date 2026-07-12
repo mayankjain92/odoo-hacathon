@@ -133,7 +133,8 @@ export class AllocationsService {
     //    cannot both pass the availability check (TOCTOU). The outer check above
     //    stays for the fast path and its richer "already allocated" error.
     return this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT pg_advisory_xact_lock(hashtext(${dto.assetId}))`;
+      // $executeRaw: pg_advisory_xact_lock returns void; $queryRaw cannot deserialize it (P2010).
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${dto.assetId}))`;
 
       const [fresh, activeCount] = await Promise.all([
         tx.asset.findUnique({ where: { id: dto.assetId }, select: { status: true } }),
