@@ -71,21 +71,24 @@ enum AuditItemResult {
 }
 
 model User {
-  id           String       @id @default(cuid())
-  name         String
-  email        String       @unique
-  passwordHash String
-  role         Role         @default(Employee)
-  status       EntityStatus @default(Active)
-  departmentId String?
-  department   Department?  @relation(fields: [departmentId], references: [id])
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                     String       @id @default(cuid())
+  name                   String
+  email                  String       @unique
+  passwordHash           String
+  role                   Role         @default(Employee)
+  status                 EntityStatus @default(Active)
+  departmentId           String?
+  department             Department?  @relation(fields: [departmentId], references: [id])
+  refreshTokenHash       String?
+  passwordResetTokenHash String?
+  passwordResetExpiresAt DateTime?
+  createdAt              DateTime     @default(now())
+  updatedAt              DateTime     @updatedAt
 
-  headedDepartments Department[]      @relation("DepartmentHead")
-  allocations       Allocation[]      @relation("AllocationEmployee")
-  transferRequests  TransferRequest[] @relation("TransferRequester")
-  transferApprovals TransferRequest[] @relation("TransferApprover")
+  headedDepartments Department[]         @relation("DepartmentHead")
+  allocations       Allocation[]         @relation("AllocationEmployee")
+  transferRequests  TransferRequest[]    @relation("TransferRequester")
+  transferApprovals TransferRequest[]    @relation("TransferApprover")
   bookings          Booking[]
   maintenanceReqs   MaintenanceRequest[] @relation("MaintenanceRequester")
   auditAssignments  AuditCycleAuditor[]
