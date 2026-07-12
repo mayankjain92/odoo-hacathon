@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { HealthModule } from "./health/health.module";
 import { PrismaModule } from "./prisma/prisma.module";
+import { CloudinaryModule } from "./common/cloudinary/cloudinary.module";
 import { AuthModule } from "./auth/auth.module";
 import { OrgModule } from "./org/org.module";
 import { AssetsModule } from "./assets/assets.module";
@@ -17,6 +18,7 @@ import { JobsModule } from "./jobs/jobs.module";
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
+    CloudinaryModule,
     HealthModule,
     AuthModule,
     OrgModule,
